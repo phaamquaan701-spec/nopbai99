@@ -1,0 +1,188 @@
+/* ==========================================================================
+   Mobile Image Viewer Styles (Fullscreen, Gestures, Zoom, Swipe)
+   ========================================================================== */
+.viewer-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.96);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  touch-action: none; /* Điều khiển cử chỉ ngón tay thủ công */
+  user-select: none;
+}
+
+.viewer-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Header Viewer */
+.viewer-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffffff;
+  z-index: 1010;
+}
+
+.viewer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viewer-student-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.viewer-sub-info {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+}
+
+.viewer-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.viewer-action-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 6px 14px;
+  border-radius: 20px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.viewer-action-btn:hover, .viewer-action-btn:active {
+  background: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.viewer-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.viewer-close-btn:active {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Main Viewport */
+.viewer-viewport {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.viewer-image-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.viewer-image {
+  max-width: 95%;
+  max-height: 85%;
+  object-fit: contain;
+  pointer-events: auto;
+  user-select: auto;
+  -webkit-user-select: auto;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  transition: opacity 0.15s ease;
+}
+
+/* Footer & Navigation Indicator */
+.viewer-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffffff;
+  z-index: 1010;
+}
+
+.viewer-counter {
+  font-size: 0.88rem;
+  font-weight: 600;
+  background: rgba(255,255,255,0.15);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+.viewer-nav-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.viewer-nav-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.viewer-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Hướng dẫn cử chỉ nhỏ gọn */
+.viewer-hints {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}

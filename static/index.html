@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>EduNopBai – Hệ Thống Nộp Bài Tập Học Sinh</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body style="padding-bottom: 20px; background: #f8fafc;">
+  <div class="container" style="min-height: 100vh; display: flex; flex-direction: column; justify-content: center;">
+    
+    <!-- Logo & Tiêu đề chính thức -->
+    <div style="text-align: center; margin-bottom: 28px;">
+      <div style="display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; background: #eff6ff; border-radius: 20px; margin-bottom: 12px; box-shadow: var(--shadow-sm);">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+      </div>
+      <h1 style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">EduNopBai</h1>
+      <p style="font-size: 0.88rem; color: #64748b; margin-top: 4px;">Cổng nộp và quản lý bài tập trực tuyến</p>
+    </div>
+
+    <!-- Form Đăng nhập chính thức -->
+    <div class="card" style="box-shadow: var(--shadow-md); border-radius: var(--radius-lg); padding: 24px;">
+      <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 18px; text-align: center;">Đăng nhập hệ thống</h2>
+      
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="username">Tên đăng nhập</label>
+          <input type="text" id="username" class="form-control" placeholder="Nhập tên đăng nhập của bạn..." required autocomplete="username">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 22px;">
+          <label class="form-label" for="password">Mật khẩu</label>
+          <input type="password" id="password" class="form-control" placeholder="Nhập mật khẩu..." required autocomplete="current-password">
+        </div>
+
+        <button type="submit" id="btn-login" class="btn btn-primary" style="font-size: 1rem; border-radius: var(--radius-md);">
+          Đăng nhập
+        </button>
+      </form>
+    </div>
+
+    <!-- Hướng dẫn trợ giúp học sinh -->
+    <div style="margin-top: 20px; text-align: center;">
+      <p style="font-size: 0.78rem; color: #94a3b8;">
+        Học sinh sử dụng tài khoản được giáo viên cung cấp để đăng nhập.<br>
+        Nếu quên mật khẩu, vui lòng liên hệ Giáo viên chủ nhiệm để cấp lại.
+      </p>
+    </div>
+
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/anti_inspect.js"></script>
+  <script>
+    // Tự chuyển hướng nếu đã đăng nhập trước đó
+    (async function checkExistingAuth() {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        try {
+          const res = await apiCall("/api/auth/me");
+          if (res.user.role === "admin") {
+            window.location.href = "/admin";
+          } else {
+            window.location.href = "/student";
+          }
+        } catch (e) {
+          // Token cũ hết hạn
+        }
+      }
+    })();
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("btn-login");
+
+      btn.disabled = true;
+      btn.textContent = "Đang xác thực...";
+
+      try {
+        const data = await apiCall("/api/auth/login", {
+          method: "POST",
+          body: JSON.stringify({ username, password })
+        });
+
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("user_info", JSON.stringify(data.user));
+        showToast("Đăng nhập thành công!");
+
+        setTimeout(() => {
+          if (data.user.role === "admin") {
+            window.location.href = "/admin";
+          } else {
+            window.location.href = "/student";
+          }
+        }, 300);
+      } catch (err) {
+        showToast(err.message, true);
+        btn.disabled = false;
+        btn.textContent = "Đăng nhập";
+      }
+    });
+  </script>
+</body>
+</html>
