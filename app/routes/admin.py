@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from app.config import UPLOAD_DIR
 from app.database import get_db, get_current_iso_time
 from app.security import require_admin, hash_password
+from app.image_service import get_image_bytes
 from app.deadline_engine import (
     evaluate_student_assignment_status,
     parse_iso_time,
@@ -642,11 +643,12 @@ def export_assignment_submissions_zip(assignment_id: int, admin: dict = Depends(
 
             for idx, f in enumerate(data["files"], start=1):
                 storage_key = f["storage_key"]
-                physical_file = (UPLOAD_DIR / storage_key).resolve()
-                if physical_file.is_file():
-                    ext = physical_file.suffix or ".jpg"
-                    arcname = f"{folder_name}/trang_{idx:02d}{ext}"
-                    zf.write(physical_file, arcname=arcname)
+                try:
+                    img_bytes = get_image_bytes(storage_key)
+                    arcname = f"{folder_name}/trang_{idx:02d}.jpg"
+                    zf.writestr(arcname, img_bytes)
+                except Exception:
+                    pass  # Bỏ qua file không tải được
             stt += 1
 
         manifest_lines.append("=" * 60)

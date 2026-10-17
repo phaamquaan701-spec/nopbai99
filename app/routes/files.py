@@ -1,11 +1,17 @@
-﻿from pathlib import Path
+import os
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from app.config import UPLOAD_DIR
 from app.database import get_db
 from app.security import get_current_user
+from app.image_service import get_image_bytes
 
 router = APIRouter(prefix="/api/files", tags=["Files"])
+
+BLOB_TOKEN = os.environ.get("BLOB_READ_WRITE_TOKEN", "")
+USE_BLOB = bool(BLOB_TOKEN)
+
 
 @router.get("/{file_id}")
 def get_submission_file(file_id: int, current_user: dict = Depends(get_current_user)):
@@ -36,16 +42,33 @@ def get_submission_file(file_id: int, current_user: dict = Depends(get_current_u
             )
 
         storage_key = row["storage_key"]
-        # Ngăn ngừa Directory Traversal
-        safe_path = (UPLOAD_DIR / storage_key).resolve()
-        if not str(safe_path).startswith(str(UPLOAD_DIR.resolve())):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Đường dẫn file không hợp lệ.")
 
-        if not safe_path.is_file():
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File vật lý không tồn tại trên hệ thống lưu trữ.")
+    # Nếu storage_key là URL (Vercel Blob) → redirect hoặc stream
+    if storage_key.startswith("http://") or storage_key.startswith("https://"):
+        # Stream ảnh về để không lộ URL blob ra ngoài
+        try:
+            image_bytes = get_image_bytes(storage_key)
+            return Response(
+                content=image_bytes,
+                media_type=row["mime_type"],
+                headers={
+                    "Content-Disposition": f'inline; filename="{row["sanitized_filename"]}"',
+                    "Cache-Control": "private, max-age=3600"
+                }
+            )
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File không tồn tại trên hệ thống lưu trữ.")
 
-        return FileResponse(
-            path=safe_path,
-            media_type=row["mime_type"],
-            filename=row["sanitized_filename"]
-        )
+    # Local filesystem (dev)
+    safe_path = (UPLOAD_DIR / storage_key).resolve()
+    if not str(safe_path).startswith(str(UPLOAD_DIR.resolve())):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Đường dẫn file không hợp lệ.")
+
+    if not safe_path.is_file():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File vật lý không tồn tại trên hệ thống lưu trữ.")
+
+    return FileResponse(
+        path=safe_path,
+        media_type=row["mime_type"],
+        filename=row["sanitized_filename"]
+    )

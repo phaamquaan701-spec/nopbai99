@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Student Portal Logic
  */
 let currentStudent = null;
@@ -310,6 +310,50 @@ function previewSingle(url) {
   });
 }
 
+async function compressImageForUpload(file) {
+  if (!file.type || !file.type.startsWith("image/")) return file;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const maxDim = 2048;
+      let width = img.width;
+      let height = img.height;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.size < file.size) {
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" }));
+          } else {
+            resolve(file);
+          }
+        },
+        "image/jpeg",
+        0.85
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+    img.src = url;
+  });
+}
+
 // Xác nhận và upload nộp bài
 async function confirmAndSubmit() {
   if (selectedFiles.length === 0) {
@@ -329,13 +373,18 @@ async function confirmAndSubmit() {
   btn.disabled = true;
   progressBox.style.display = "block";
   progressBar.style.width = "0%";
-  statusText.textContent = `Đang tải ${selectedFiles.length} ảnh lên...`;
+  statusText.textContent = `Đang tối ưu dung lượng ${selectedFiles.length} ảnh...`;
   percentText.textContent = "0%";
 
   const formData = new FormData();
-  selectedFiles.forEach((item) => {
-    formData.append("files", item.file, item.name);
-  });
+  for (let i = 0; i < selectedFiles.length; i++) {
+    const item = selectedFiles[i];
+    statusText.textContent = `Đang xử lý ảnh ${i + 1}/${selectedFiles.length}...`;
+    const optimized = await compressImageForUpload(item.file);
+    formData.append("files", optimized, optimized.name || item.name);
+  }
+
+  statusText.textContent = `Đang tải ${selectedFiles.length} ảnh lên...`;
 
   // Sử dụng XMLHttpRequest để lắng nghe onprogress upload chính xác
   const xhr = new XMLHttpRequest();

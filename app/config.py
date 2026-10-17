@@ -3,11 +3,23 @@ from pathlib import Path
 from datetime import timezone, timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-STORAGE_DIR = BASE_DIR / "storage"
-UPLOAD_DIR = STORAGE_DIR / "uploads"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-DB_PATH = BASE_DIR / "data.db"
+# Kiểm tra nếu chạy trên Vercel / serverless container (chỉ /tmp có quyền ghi)
+IS_VERCEL = bool(os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"))
+
+if IS_VERCEL:
+    STORAGE_DIR = Path("/tmp/storage")
+    UPLOAD_DIR = STORAGE_DIR / "uploads"
+    DB_PATH = Path("/tmp/data.db")
+else:
+    STORAGE_DIR = BASE_DIR / "storage"
+    UPLOAD_DIR = STORAGE_DIR / "uploads"
+    DB_PATH = BASE_DIR / "data.db"
+
+try:
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "eduviet-secure-session-secret-key-2026-very-safe")
 ALGORITHM = "HS256"
